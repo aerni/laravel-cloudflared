@@ -2,6 +2,7 @@
 
 namespace Aerni\Cloudflared\Console\Commands;
 
+use Aerni\Cloudflared\Concerns\HasProjectConfig;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Process;
@@ -13,27 +14,20 @@ use RuntimeException;
 
 class CloudflaredInstall extends Command
 {
+    use HasProjectConfig;
+
     protected $signature = 'cloudflared:install';
 
     protected $description = 'Create a Cloudflare Tunnel for this project.';
 
     protected string $hostname;
-    protected string $subdomain;
     protected string $tunnelId;
-    protected string $credentialsFilePath;
 
     public function handle(): void
     {
-        // If there is an existing config file, we shouldn't create a new tunnel
-        // But we should ensure that the tunnel exists
-        // And if it exists, we should ensure that the CNAME records exist.
-        // If there is no tunnel (no config found in .cloudflared directoy), we should create a new tunnel
-        // and overwrite the .cloudflared.yaml config.
-
-        // if (File::exists('.cloudflared.yaml')) {
-        //     warning('Cloudflared was already installed for this project.');
-        //     return;
-        // }
+        if (File::exists($this->projectConfigPath())) {
+            $this->fail('Cloudflared is already installed for this project.');
+        }
 
         $herdSite = basename(base_path());
 
@@ -69,78 +63,51 @@ class CloudflaredInstall extends Command
     protected function createCloudflaredTunnel(): void
     {
         $result = spin(
-            callback: fn () => Process::run("cloudflared tunnel create {$this->hostname}"),
-            message: 'Creating tunnel …'
+            callback: fn () => Process::run("cloudflared tunnel create {$this->hostname}")->throw(),
+            message: "Creating tunnel: {$this->hostname}"
         );
 
-        if ($result->failed()) {
-            throw new RuntimeException($result->errorOutput());
-        }
-
-        if (! preg_match('/([^\s]+\.json)(?=$|\s|\.)/', $result->output(), $credentialsPathMatch)) {
-            throw new RuntimeException('Unable to extract the credentials file path.');
-        }
-
         if (! preg_match('/Created tunnel .+ with id ([a-f0-9\-]+)/', $result->output(), $tunnelMatch)) {
-            throw new RuntimeException('Unable to extract the tunnel ID.');
+            $this->fail('Unable to extract the tunnel ID.');
         }
 
         $this->tunnelId = $tunnelMatch[1];
-        $this->credentialsFilePath = $credentialsPathMatch[1];
 
-        info('<info>[✔]</info> Created tunnel.');
+        info("<info>[✔]</info> Created tunnel: {$this->hostname}");
     }
 
     protected function createCloudflaredFile(): void
     {
-        $config = <<<YAML
+        File::put('.cloudflared.yaml', <<<YAML
 tunnel: {$this->tunnelId}
-credentials-file: {$this->credentialsFilePath}
 hostname: {$this->hostname}
-YAML;
+YAML);
+    }
 
-        File::put('.cloudflared.yaml', $config);
+    protected function createDnsRecord(string $name): void
+    {
+        spin(
+            callback: fn () => Process::run("cloudflared tunnel route dns --overwrite-dns {$this->hostname} {$name}")->throw(),
+            message: "Creating DNS record: {$name}"
+        );
+
+        info("<info>[✔]</info> Created DNS record: {$name}");
     }
 
     protected function createAppDnsRecord(): void
     {
-        $result = spin(
-            callback: fn () => Process::run("cloudflared tunnel route dns --overwrite-dns {$this->hostname} {$this->hostname}"),
-            message: "Creating DNS record: {$this->hostname} …"
-        );
-
-        if ($result->failed()) {
-            throw new RuntimeException($result->errorOutput());
-        }
-
-        info("<info>[✔]</info> Created DNS record: {$this->hostname}");
+        $this->createDnsRecord($this->hostname);
     }
 
     protected function createViteDnsRecord(): void
     {
-        $result = spin(
-            callback: fn () => Process::run("cloudflared tunnel route dns --overwrite-dns {$this->hostname} vite-{$this->hostname}"),
-            message: "Creating DNS record: vite-{$this->hostname} …"
-        );
-
-        if ($result->failed()) {
-            throw new RuntimeException($result->errorOutput());
-        }
-
-        info("<info>[✔]</info> Created DNS record: vite-{$this->hostname}");
+        $this->createDnsRecord("vite-{$this->hostname}");
     }
 
     protected function createHerdLink(): void
     {
-        $result = spin(
-            callback: fn () => Process::run("herd link {$this->hostname}"),
-            message: 'Creating Herd link …'
-        );
+        Process::run("herd link {$this->hostname}")->throw();
 
-        if ($result->failed()) {
-            throw new RuntimeException($result->errorOutput());
-        }
-
-        info('<info>[✔]</info> Created Herd link.');
+        info("<info>[✔]</info> Created Herd link: {$this->hostname}");
     }
 }
