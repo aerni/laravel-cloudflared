@@ -3,6 +3,7 @@
 namespace Aerni\Cloudflared\Console\Commands;
 
 use Aerni\Cloudflared\Concerns\HasProjectConfig;
+use Aerni\Cloudflared\Concerns\InteractsWithHerd;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Process;
@@ -12,7 +13,7 @@ use function Laravel\Prompts\spin;
 
 class CloudflaredUninstall extends Command
 {
-    use HasProjectConfig;
+    use HasProjectConfig, InteractsWithHerd;
 
     protected $signature = 'cloudflared:uninstall';
 
@@ -20,9 +21,13 @@ class CloudflaredUninstall extends Command
 
     public function handle(): void
     {
+        if (! File::exists($this->projectConfigPath())) {
+            $this->fail("Missing file <info>.cloudflared.yaml</info>. There is nothing to uninstall.");
+        }
+
         $this->deleteTunnel();
+        $this->deleteHerdLink($this->hostname());
         // Optionally: Can we also delete the associated DNS records?
-        $this->deleteHerdLink();
     }
 
     protected function deleteTunnel(): void
@@ -37,12 +42,5 @@ class CloudflaredUninstall extends Command
         );
 
         info("<info>[✔]</info> Deleted tunnel: {$this->hostname()}");
-    }
-
-    protected function deleteHerdLink(): void
-    {
-        Process::run("herd unlink {$this->hostname()}")->throw();
-
-        info("<info>[✔]</info> Deleted Herd link: {$this->hostname()}");
     }
 }

@@ -3,24 +3,29 @@
 namespace Aerni\Cloudflared\Console\Commands;
 
 use Aerni\Cloudflared\Concerns\HasProjectConfig;
+use Aerni\Cloudflared\Concerns\InteractsWithHerd;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Process;
 
 use function Laravel\Prompts\info;
 
-class CloudflaredRun extends Command
+class CloudflaredStart extends Command
 {
-    use HasProjectConfig;
+    use HasProjectConfig, InteractsWithHerd;
 
-    protected $signature = 'cloudflared:run';
+    protected $signature = 'cloudflared:start';
 
     protected $description = 'Run the Cloudflare Tunnel of this project.';
 
     public function handle(): void
     {
-        info('Starting cloudflared tunnel.');
+        if (! File::exists($this->projectConfigPath())) {
+            $this->fail("Missing file <info>.cloudflared.yaml</info>. Run <info>php artisan cloudflared:install</info> to create a tunnel.");
+        }
 
         $this->createCloudflaredConfig();
+        $this->createHerdLink($this->hostname());
         $this->runCloudflared();
     }
 
@@ -34,6 +39,8 @@ class CloudflaredRun extends Command
 
     protected function runCloudflared(): void
     {
+        info('<info>[✔]</info> Started tunnel');
+
         // Set up signal handlers before starting the process
         pcntl_async_signals(true);
 
@@ -45,7 +52,7 @@ class CloudflaredRun extends Command
         $signalHandler = function ($signal) use ($process) {
             $process->signal(SIGTERM);
             $process->wait();
-            $this->info('Stopped cloudflared tunnel.');
+            $this->cleanupCloudflaredProcess();
             exit(0);
         };
 
@@ -63,5 +70,14 @@ class CloudflaredRun extends Command
             }
             throw $e;
         }
+    }
+
+    protected function cleanupCloudflaredProcess(): void
+    {
+        info('<info>[✔]</info> Stopped tunnel');
+
+        File::delete($this->tunnelConfigPath());
+
+        $this->deleteHerdLink($this->hostname());
     }
 }

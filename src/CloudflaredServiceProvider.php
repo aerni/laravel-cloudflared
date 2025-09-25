@@ -3,7 +3,7 @@
 namespace Aerni\Cloudflared;
 
 use Aerni\Cloudflared\Console\Commands\CloudflaredInstall;
-use Aerni\Cloudflared\Console\Commands\CloudflaredRun;
+use Aerni\Cloudflared\Console\Commands\CloudflaredStart;
 use Aerni\Cloudflared\Console\Commands\CloudflaredUninstall;
 use Illuminate\Support\ServiceProvider;
 
@@ -27,7 +27,7 @@ class CloudflaredServiceProvider extends ServiceProvider
         if ($this->app->runningInConsole()) {
             $this->commands([
                 CloudflaredInstall::class,
-                CloudflaredRun::class,
+                CloudflaredStart::class,
                 CloudflaredUninstall::class,
             ]);
         }

@@ -3,6 +3,7 @@
 namespace Aerni\Cloudflared\Console\Commands;
 
 use Aerni\Cloudflared\Concerns\HasProjectConfig;
+use Aerni\Cloudflared\Concerns\InteractsWithHerd;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Process;
@@ -14,7 +15,7 @@ use function Laravel\Prompts\text;
 
 class CloudflaredInstall extends Command
 {
-    use HasProjectConfig;
+    use HasProjectConfig, InteractsWithHerd;
 
     protected $signature = 'cloudflared:install';
 
@@ -30,15 +31,13 @@ class CloudflaredInstall extends Command
             $this->fail('Cloudflared is already installed for this project.');
         }
 
-        $herdSite = basename(base_path());
-
         $this->hostname = text(
             label: 'What hostname do you want to associate with this tunnel?',
-            placeholder: "{$herdSite}.domain.com",
+            placeholder: "{$this->herdSiteName()}.domain.com",
             hint: 'It is recommended to match the subdomain to your Laravel Herd site.',
             validate: fn (string $value) => match (true) {
                 empty($value) => 'The hostname field is required.',
-                count(array_filter(explode('.', $value))) < 3 => "The hostname must include a subdomain (e.g., {$herdSite}.domain.com).",
+                count(array_filter(explode('.', $value))) < 3 => "The hostname must include a subdomain (e.g., {$this->herdSiteName()}.domain.com).",
                 default => null,
             },
         );
@@ -58,7 +57,7 @@ class CloudflaredInstall extends Command
         $this->createCloudflaredFile();
         $this->createAppDnsRecord();
         $this->createViteDnsRecord();
-        $this->createHerdLink();
+        $this->createHerdLink($this->hostname);
     }
 
     protected function createCloudflaredTunnel(): void
@@ -103,12 +102,5 @@ YAML);
     protected function createViteDnsRecord(): void
     {
         $this->createDnsRecord("vite-{$this->hostname}");
-    }
-
-    protected function createHerdLink(): void
-    {
-        Process::run("herd link {$this->hostname}")->throw();
-
-        info("<info>[✔]</info> Created Herd link: {$this->hostname}");
     }
 }
