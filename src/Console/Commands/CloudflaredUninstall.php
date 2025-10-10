@@ -21,7 +21,7 @@ class CloudflaredUninstall extends Command
 
     protected TunnelConfig $tunnelConfig;
 
-    public function handle(): void
+    public function handle()
     {
         $this->verifyCloudflaredFoundInPath();
         $this->verifyHerdFoundInPath();
@@ -40,8 +40,7 @@ class CloudflaredUninstall extends Command
 
         if (! $confirmed) {
             error(' ⚠ Uninstallation aborted.');
-
-            return;
+            return Command::FAILURE;
         }
 
         $this->deleteCloudflaredTunnel($this->tunnelConfig->hostname());

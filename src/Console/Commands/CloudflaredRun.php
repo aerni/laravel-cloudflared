@@ -47,6 +47,7 @@ class CloudflaredRun extends Command
     // TODO: Only show process output if it was requested via a --debug or --logLevel or something like that.
     // Else, only show errors.
 
+    // TODO: Look through this and see if there is anything to optimize.
     protected function runCloudflared(): void
     {
         info(' ✔ Started tunnel.');
