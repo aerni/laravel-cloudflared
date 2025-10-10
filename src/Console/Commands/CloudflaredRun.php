@@ -4,14 +4,16 @@ namespace Aerni\Cloudflared\Console\Commands;
 
 use Illuminate\Console\Command;
 use function Laravel\Prompts\info;
+use function Laravel\Prompts\error;
 use Aerni\Cloudflared\TunnelConfig;
 use Illuminate\Support\Facades\Process;
 use Aerni\Cloudflared\Facades\Cloudflared;
 use Aerni\Cloudflared\Concerns\InteractsWithHerd;
+use Aerni\Cloudflared\Concerns\InteractsWithTunnel;
 
 class CloudflaredRun extends Command
 {
-    use InteractsWithHerd;
+    use InteractsWithHerd, InteractsWithTunnel;
 
     protected $signature = 'cloudflared:run';
 
@@ -21,8 +23,12 @@ class CloudflaredRun extends Command
 
     public function handle(): void
     {
+        $this->verifyCloudflaredFoundInPath();
+        $this->verifyHerdFoundInPath();
+
         if (! Cloudflared::isInstalled()) {
-            $this->fail("Missing project file <info>.cloudflared.yaml</info>. Run <info>php artisan cloudflared:install</info> first.");
+            error(' ⚠ Missing project file: .cloudflared.yaml');
+            exit(1);
         }
 
         $this->tunnelConfig = Cloudflared::tunnelConfig();

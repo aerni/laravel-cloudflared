@@ -10,8 +10,6 @@ use Aerni\Cloudflared\TunnelConfig;
 
 use function Laravel\Prompts\confirm;
 use function Laravel\Prompts\error;
-use function Laravel\Prompts\info;
-use function Laravel\Prompts\note;
 
 class CloudflaredUninstall extends Command
 {
@@ -25,34 +23,29 @@ class CloudflaredUninstall extends Command
 
     public function handle(): void
     {
+        $this->verifyCloudflaredFoundInPath();
+        $this->verifyHerdFoundInPath();
+
         if (! Cloudflared::isInstalled()) {
-            $this->fail("Missing project file <info>.cloudflared.yaml</info>. There is nothing to uninstall.");
+            error(' ⚠ Missing project file: .cloudflared.yaml');
+            exit(1);
         }
 
         $this->tunnelConfig = Cloudflared::tunnelConfig();
 
         $confirmed = confirm(
             label: "Are you sure you want to uninstall the {$this->tunnelConfig->hostname()} tunnel?",
-            default: false,
-            hint: 'Deletes the cloudflared tunnel, Herd link, and all associated configs.'
+            hint: 'Deletes the cloudflared tunnel, Herd link, and all associated configs.',
         );
 
         if (! $confirmed) {
-            error(' ⚠ Cancelled.');
+            error(' ⚠ Uninstallation aborted.');
             return;
         }
 
         $this->deleteCloudflaredTunnel($this->tunnelConfig->hostname());
         $this->deleteHerdLink($this->tunnelConfig->hostname());
-        $this->deleteProjectConfigs();
+        $this->deleteProjectConfigs($this->tunnelConfig);
         // Optionally: Delete DNS record. This requires a Cloudflare API token.
-    }
-
-    protected function deleteProjectConfigs(): void
-    {
-        $this->tunnelConfig->delete();
-        $this->tunnelConfig->projectConfig->delete();
-
-        info(' ✔ Deleted tunnel configs.');
     }
 }

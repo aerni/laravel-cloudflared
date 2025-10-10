@@ -8,6 +8,7 @@ use Aerni\Cloudflared\Facades\Cloudflared;
 use Aerni\Cloudflared\ProjectConfig;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Process;
+use function Laravel\Prompts\error;
 use function Laravel\Prompts\info;
 use function Laravel\Prompts\select;
 use function Laravel\Prompts\spin;
@@ -26,12 +27,11 @@ class CloudflaredInstall extends Command
 
     public function handle()
     {
-        if (Process::run('cloudflared --version')->failed()) {
-            $this->fail('cloudflared not found in PATH.');
-        }
+        $this->verifyCloudflaredFoundInPath();
+        $this->verifyHerdFoundInPath();
 
-        if (Process::run('herd --version')->failed()) {
-            $this->fail('Laravel Herd not found in PATH.');
+        if (Cloudflared::isInstalled()) {
+            $this->handleExistingInstallation();
         }
 
         $this->createCloudflaredTunnel($this->askForHostname());
@@ -39,6 +39,26 @@ class CloudflaredInstall extends Command
         $this->createViteDnsRecord();
         $this->createHerdLink($this->projectConfig->hostname);
         $this->saveProjectConfig();
+    }
+
+    protected function handleExistingInstallation(): void
+    {
+        $tunnelConfig = Cloudflared::tunnelConfig();
+
+        warning(" ⚠ There is an existing tunnel for this project (hostname: {$tunnelConfig->hostname()}).");
+
+        $selection = select(
+            label: 'How do you want to proceed?',
+            options: ['Abort', 'Delete existing tunnel and create a new one']
+        );
+
+        if ($selection === 'Abort') {
+            error(' ⚠ Installation aborted.');
+            exit(0);
+        }
+
+        $this->deleteCloudflaredTunnel($tunnelConfig->hostname());
+        $this->deleteProjectConfigs($tunnelConfig);
     }
 
     protected function createCloudflaredTunnel(string $name): void
@@ -72,7 +92,7 @@ class CloudflaredInstall extends Command
 
     protected function handleExistingTunnel(string $name): void
     {
-        warning(" ⚠ Tunnel for {$name} already exists.");
+        warning(" ⚠ A tunnel for {$name} already exists.");
 
         $selection = select(
             label: 'How do you want to proceed?',
@@ -144,7 +164,7 @@ class CloudflaredInstall extends Command
         }
 
         $this->deleteCloudflaredTunnel($this->projectConfig->hostname);
-        exit(1);
+        exit(0);
     }
 
     protected function saveProjectConfig(): void
