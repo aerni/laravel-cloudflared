@@ -27,8 +27,7 @@ class CloudflaredUninstall extends Command
         $this->verifyHerdFoundInPath();
 
         if (! Cloudflared::isInstalled()) {
-            error(' ⚠ Missing project file: .cloudflared.yaml');
-            exit(1);
+            $this->fail('Missing project file: .cloudflared.yaml');
         }
 
         $this->tunnelConfig = Cloudflared::tunnelConfig();
@@ -40,7 +39,7 @@ class CloudflaredUninstall extends Command
 
         if (! $confirmed) {
             error(' ⚠ Uninstallation aborted.');
-            return Command::FAILURE;
+            return self::SUCCESS;
         }
 
         $this->deleteCloudflaredTunnel($this->tunnelConfig->hostname());

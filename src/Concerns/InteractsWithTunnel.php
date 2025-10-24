@@ -5,7 +5,6 @@ namespace Aerni\Cloudflared\Concerns;
 use Aerni\Cloudflared\TunnelConfig;
 use Illuminate\Support\Facades\Process;
 
-use function Laravel\Prompts\error;
 use function Laravel\Prompts\info;
 use function Laravel\Prompts\spin;
 use function Laravel\Prompts\warning;
@@ -14,12 +13,9 @@ trait InteractsWithTunnel
 {
     protected function verifyCloudflaredFoundInPath(): void
     {
-        if (Process::run('cloudflared --version')->successful()) {
-            return;
+        if (Process::run('cloudflared --version')->failed()) {
+            $this->fail('cloudflared not found in PATH.');
         }
-
-        error(' ⚠ cloudflared not found in PATH.');
-        exit(1);
     }
 
     protected function deleteCloudflaredTunnel(string $name): void

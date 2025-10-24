@@ -4,19 +4,15 @@ namespace Aerni\Cloudflared\Concerns;
 
 use Illuminate\Support\Facades\Process;
 
-use function Laravel\Prompts\error;
 use function Laravel\Prompts\info;
 
 trait InteractsWithHerd
 {
     protected function verifyHerdFoundInPath(): void
     {
-        if (Process::run('herd --version')->successful()) {
-            return;
+        if (Process::run('herd --version')->failed()) {
+            $this->fail('Laravel Herd not found in PATH.');
         }
-
-        error(' ⚠ Laravel Herd not found in PATH.');
-        exit(1);
     }
 
     protected function createHerdLink(string $hostname): void
