@@ -8,8 +8,6 @@ use Aerni\Cloudflared\Facades\Cloudflared;
 use Aerni\Cloudflared\TunnelConfig;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Process;
-
-use function Laravel\Prompts\error;
 use function Laravel\Prompts\info;
 
 class CloudflaredRun extends Command
@@ -33,12 +31,12 @@ class CloudflaredRun extends Command
 
         $this->tunnelConfig = Cloudflared::tunnelConfig();
 
-        $this->createCloudflaredTunnelConfig();
+        $this->createTunnelConfig();
         $this->createHerdLink($this->tunnelConfig->hostname());
         $this->runCloudflared();
     }
 
-    protected function createCloudflaredTunnelConfig(): void
+    protected function createTunnelConfig(): void
     {
         $this->tunnelConfig->save();
     }

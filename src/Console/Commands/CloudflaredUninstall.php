@@ -7,7 +7,6 @@ use Aerni\Cloudflared\Concerns\InteractsWithTunnel;
 use Aerni\Cloudflared\Facades\Cloudflared;
 use Aerni\Cloudflared\TunnelConfig;
 use Illuminate\Console\Command;
-
 use function Laravel\Prompts\confirm;
 use function Laravel\Prompts\error;
 
@@ -39,10 +38,11 @@ class CloudflaredUninstall extends Command
 
         if (! $confirmed) {
             error(' ⚠ Uninstallation aborted.');
+
             return self::SUCCESS;
         }
 
-        $this->deleteCloudflaredTunnel($this->tunnelConfig->hostname());
+        $this->deleteTunnel($this->tunnelConfig->hostname());
         $this->deleteHerdLink($this->tunnelConfig->hostname());
         $this->deleteProjectConfigs($this->tunnelConfig);
         // Optionally: Delete DNS record. This requires a Cloudflare API token.

@@ -8,7 +8,6 @@ use Aerni\Cloudflared\Facades\Cloudflared;
 use Aerni\Cloudflared\ProjectConfig;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Process;
-
 use function Laravel\Prompts\confirm;
 use function Laravel\Prompts\error;
 use function Laravel\Prompts\info;
@@ -39,7 +38,7 @@ class CloudflaredInstall extends Command
         $hostname = $this->askForHostname();
         $createViteDns = confirm(label: 'Do you want to create a Vite DNS record?');
 
-        $this->createCloudflaredTunnel($hostname);
+        $this->createTunnel($hostname);
         $this->createAppDnsRecord();
 
         if ($createViteDns) {
@@ -66,11 +65,11 @@ class CloudflaredInstall extends Command
             exit(0);
         }
 
-        $this->deleteCloudflaredTunnel($tunnelConfig->hostname());
+        $this->deleteTunnel($tunnelConfig->hostname());
         $this->deleteProjectConfigs($tunnelConfig);
     }
 
-    protected function createCloudflaredTunnel(string $name): void
+    protected function createTunnel(string $name): void
     {
         $tunnelInfo = spin(
             callback: fn () => Process::run("cloudflared tunnel info {$name}"),
@@ -109,13 +108,13 @@ class CloudflaredInstall extends Command
         );
 
         if ($selection === 'Choose a different hostname') {
-            $this->createCloudflaredTunnel($this->askForHostname());
+            $this->createTunnel($this->askForHostname());
 
             return;
         }
 
-        $this->deleteCloudflaredTunnel($name);
-        $this->createCloudflaredTunnel($name);
+        $this->deleteTunnel($name);
+        $this->createTunnel($name);
     }
 
     protected function createAppDnsRecord(): void
@@ -160,7 +159,7 @@ class CloudflaredInstall extends Command
         );
 
         if ($selection === 'Choose a different hostname') {
-            $this->deleteCloudflaredTunnel($this->projectConfig->hostname);
+            $this->deleteTunnel($this->projectConfig->hostname);
             $this->handle();
 
             return;
@@ -172,7 +171,7 @@ class CloudflaredInstall extends Command
             return;
         }
 
-        $this->deleteCloudflaredTunnel($this->projectConfig->hostname);
+        $this->deleteTunnel($this->projectConfig->hostname);
         exit(0);
     }
 

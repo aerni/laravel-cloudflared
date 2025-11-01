@@ -4,7 +4,6 @@ namespace Aerni\Cloudflared\Concerns;
 
 use Aerni\Cloudflared\TunnelConfig;
 use Illuminate\Support\Facades\Process;
-
 use function Laravel\Prompts\info;
 use function Laravel\Prompts\spin;
 use function Laravel\Prompts\warning;
@@ -18,7 +17,7 @@ trait InteractsWithTunnel
         }
     }
 
-    protected function deleteCloudflaredTunnel(string $name): void
+    protected function deleteTunnel(string $name): void
     {
         $result = spin(
             callback: fn () => Process::run("cloudflared tunnel delete {$name}"),
