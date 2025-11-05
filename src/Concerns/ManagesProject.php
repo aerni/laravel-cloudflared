@@ -13,7 +13,7 @@ trait ManagesProject
     {
         $projectConfig->save();
 
-        info(' ✔ Saved project config.');
+        info(' ✔ Saved project config: .cloudflared.yaml');
     }
 
     protected function deleteProject(TunnelConfig $tunnelConfig): void
@@ -21,20 +21,20 @@ trait ManagesProject
         $tunnelConfig->delete();
         $tunnelConfig->projectConfig->delete();
 
-        info(' ✔ Deleted project config.');
+        info(' ✔ Deleted project config: .cloudflared.yaml');
     }
 
     protected function saveTunnelConfig(TunnelConfig $tunnelConfig): void
     {
         $tunnelConfig->save();
 
-        info(' ✔ Saved tunnel config.');
+        info(" ✔ Saved tunnel config: {$tunnelConfig->path()}");
     }
 
     protected function deleteTunnelConfig(TunnelConfig $tunnelConfig): void
     {
         $tunnelConfig->delete();
 
-        info(' ✔ Deleted tunnel config.');
+        info(" ✔ Deleted tunnel config: {$tunnelConfig->path()}");
     }
 }

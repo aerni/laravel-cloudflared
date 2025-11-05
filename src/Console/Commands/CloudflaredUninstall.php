@@ -25,19 +25,19 @@ class CloudflaredUninstall extends Command
         $this->verifyHerdFoundInPath();
 
         if (! Cloudflared::isInstalled()) {
-            $this->fail('Missing project file: .cloudflared.yaml');
+            $this->fail('Project file .cloudflared.yaml not found.');
         }
 
         $tunnelConfig = Cloudflared::tunnelConfig();
 
         $confirmed = confirm(
-            label: "Are you sure you want to delete the {$tunnelConfig->name()} tunnel?",
-            hint: 'Deletes the cloudflared tunnel, Herd link, and all associated configs.',
+            label: "Are you sure you want to delete tunnel {$tunnelConfig->name()}?",
+            hint: 'This will delete the cloudflared tunnel, Herd link, and all associated configs.',
             default: false,
         );
 
         if (! $confirmed) {
-            error(' ⚠ Uninstallation aborted.');
+            error(' ⚠ Cancelled.');
 
             return self::SUCCESS;
         }

@@ -26,7 +26,7 @@ class CloudflaredRun extends Command
         $this->verifyHerdFoundInPath();
 
         if (! Cloudflared::isInstalled()) {
-            $this->fail('Missing project file: .cloudflared.yaml');
+            $this->fail('Project file .cloudflared.yaml not found.');
         }
 
         $tunnelConfig = Cloudflared::tunnelConfig();

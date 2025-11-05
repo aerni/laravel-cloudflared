@@ -23,7 +23,7 @@ trait InteractsWithTunnel
     {
         return spin(
             callback: fn () => Process::run("cloudflared tunnel info {$name}")->successful(),
-            message: "Verifying if tunnel with name [{$name}] already exists."
+            message: "Verifying tunnel {$name} exists"
         );
     }
 
@@ -33,16 +33,16 @@ trait InteractsWithTunnel
 
         $result = spin(
             callback: fn () => Process::run("cloudflared tunnel create {$name}"),
-            message: 'Creating tunnel'
+            message: "Creating tunnel: {$name}"
         );
 
         $result->throw();
 
         if (! preg_match('/Created tunnel .+ with id ([a-f0-9\-]+)/', $result->output(), $tunnelMatch)) {
-            $this->fail('Unable to extract the tunnel ID from cloudflared output.');
+            $this->fail('Unable to extract tunnel ID from cloudflared output.');
         }
 
-        info(' ✔ Created tunnel.');
+        info(" ✔ Created tunnel: {$name}");
 
         return new TunnelDetails(id: $tunnelMatch[1], name: $name);
     }
@@ -55,14 +55,14 @@ trait InteractsWithTunnel
         );
 
         if ($result->seeInErrorOutput("there should only be 1 non-deleted Tunnel named {$name}")) {
-            warning(" ⚠ Can't delete tunnel [{$name}] as it doesn't exist.");
+            warning(" ⚠ Can't delete tunnel {$name} because it doesn't exist.");
 
             return;
         }
 
         $result->throw();
 
-        info(' ✔ Deleted tunnel.');
+        info(" ✔ Deleted tunnel: {$name}");
     }
 
     protected function createDnsRecord(string $id, string $hostname): bool
@@ -92,7 +92,7 @@ trait InteractsWithTunnel
 
         $result->throw();
 
-        info(" ✔ Overwritten DNS record: {$hostname}");
+        info(" ✔ Overwrote DNS record: {$hostname}");
     }
 
     protected function generateUniqueTunnelName(): string

@@ -25,6 +25,8 @@ class CloudflaredServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        $this->loadTranslationsFrom(__DIR__.'/../lang', 'cloudflared');
+
         if ($this->app->runningInConsole()) {
             $this->commands([
                 CloudflaredInstall::class,

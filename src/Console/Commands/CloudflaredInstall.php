@@ -9,6 +9,7 @@ use Aerni\Cloudflared\Facades\Cloudflared;
 use Aerni\Cloudflared\ProjectConfig;
 use Aerni\Cloudflared\TunnelConfig;
 use Illuminate\Console\Command;
+use Illuminate\Support\Arr;
 
 use function Laravel\Prompts\confirm;
 use function Laravel\Prompts\error;
@@ -65,7 +66,7 @@ class CloudflaredInstall extends Command
         $tunnelConfig = Cloudflared::tunnelConfig();
 
         if (! $this->tunnelExists($tunnelConfig->name())) {
-            warning(" ⚠ The tunnel [{$tunnelConfig->name()}] doesn't exist. Creating a new tunnel for this project.");
+            warning(" ⚠ Tunnel {$tunnelConfig->name()} doesn't exist. Cleaning up old configs and creating a new tunnel.");
 
             $this->deleteHerdLink($tunnelConfig->hostname());
             $this->deleteProject($tunnelConfig);
@@ -74,7 +75,7 @@ class CloudflaredInstall extends Command
             return;
         }
 
-        warning(" ⚠ The tunnel [{$tunnelConfig->name()}] already exists.");
+        warning(" ⚠ Tunnel {$tunnelConfig->name()} exists.");
 
         $selection = select(
             label: 'What would you like to do?',
@@ -88,11 +89,17 @@ class CloudflaredInstall extends Command
         );
 
         match ($selection) {
-            'Keep existing configuration' => exit(0),
+            'Keep existing configuration' => $this->keepExisting(),
             'Change hostname' => $this->changeHostname($tunnelConfig->projectConfig),
             'Repair DNS records' => $this->repairDnsRecords($tunnelConfig->projectConfig),
             'Delete and recreate tunnel' => $this->recreateTunnel($tunnelConfig),
         };
+    }
+
+    protected function keepExisting(): void
+    {
+        error(' ⚠ Cancelled.');
+        exit(0);
     }
 
     // If we use the API in the future, this should also delete the old DNS records.
@@ -139,9 +146,6 @@ class CloudflaredInstall extends Command
         $this->deleteTunnel($tunnelConfig->name());
         $this->deleteHerdLink($tunnelConfig->hostname());
         $this->deleteProject($tunnelConfig);
-
-        info(' ✔ Deleted existing tunnel. Creating new tunnel...');
-
         $this->handleNewInstallation();
     }
 
@@ -164,11 +168,11 @@ class CloudflaredInstall extends Command
 
     protected function handleExistingDnsRecords(ProjectConfig $projectConfig, array $existingRecords): void
     {
-        $recordsList = implode(' and ', $existingRecords);
-        $recordsCount = count($existingRecords);
-        $recordWord = $recordsCount === 1 ? 'record' : 'records';
-
-        warning(" ⚠ DNS {$recordWord} for {$recordsList} already exist.");
+        warning(' ⚠ ' . trans_choice(
+            '{1} DNS record :records already exists.|[2,*] DNS records :records already exist.',
+            count($existingRecords),
+            ['records' => Arr::join($existingRecords, ', ', ' and ')]
+        ));
 
         $selection = select(
             label: 'How do you want to proceed?',
@@ -193,11 +197,11 @@ class CloudflaredInstall extends Command
     protected function askForHostname(): string
     {
         return text(
-            label: 'The hostname you want to connect to this tunnel.',
+            label: 'What hostname do you want to connect to this tunnel?',
             placeholder: "{$this->herdSiteName()}.domain.com",
             hint: "Use a subdomain that matches the name of this site (e.g., {$this->herdSiteName()}.domain.com).",
             validate: fn (string $value) => match (true) {
-                empty($value) => 'The hostname field is required.',
+                empty($value) => 'The hostname is required.',
                 count(array_filter(explode('.', $value))) < 3 => "The hostname must be a subdomain (e.g., {$this->herdSiteName()}.domain.com).",
                 default => null,
             },
