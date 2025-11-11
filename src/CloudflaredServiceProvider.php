@@ -12,15 +12,8 @@ class CloudflaredServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
-        if (! Cloudflared::isInstalled()) {
-            return;
-        }
-
-        if (request()->host() !== Cloudflared::tunnelConfig()->hostname()) {
-            return;
-        }
-
-        config()->set('app.url', Cloudflared::tunnelConfig()->url());
+        $this->registerCloudflareClient();
+        $this->setAppUrl();
     }
 
     public function boot(): void
@@ -34,5 +27,29 @@ class CloudflaredServiceProvider extends ServiceProvider
                 CloudflaredUninstall::class,
             ]);
         }
+    }
+
+    protected function registerCloudflareClient(): void
+    {
+        $this->app->singleton(CloudflareClient::class, function ($app) {
+            if (! Certificate::exists()) {
+                throw new \RuntimeException('Cloudflare certificate not found. Please authenticate with cloudflared first.');
+            }
+
+            return new CloudflareClient(Certificate::load());
+        });
+    }
+
+    protected function setAppUrl(): void
+    {
+        if (! Cloudflared::isInstalled()) {
+            return;
+        }
+
+        if (request()->host() !== Cloudflared::tunnelConfig()->hostname()) {
+            return;
+        }
+
+        config()->set('app.url', Cloudflared::tunnelConfig()->url());
     }
 }

@@ -2,6 +2,7 @@
 
 namespace Aerni\Cloudflared\Console\Commands;
 
+use Aerni\Cloudflared\Concerns\InteractsWithCloudflareApi;
 use Aerni\Cloudflared\Concerns\InteractsWithHerd;
 use Aerni\Cloudflared\Concerns\InteractsWithTunnel;
 use Aerni\Cloudflared\Concerns\ManagesProject;
@@ -10,10 +11,13 @@ use Illuminate\Console\Command;
 
 use function Laravel\Prompts\confirm;
 use function Laravel\Prompts\error;
+use function Laravel\Prompts\info;
+use function Laravel\Prompts\spin;
+use function Laravel\Prompts\warning;
 
 class CloudflaredUninstall extends Command
 {
-    use InteractsWithHerd, InteractsWithTunnel, ManagesProject;
+    use InteractsWithCloudflareApi, InteractsWithHerd, InteractsWithTunnel, ManagesProject;
 
     protected $signature = 'cloudflared:uninstall';
 
@@ -32,7 +36,7 @@ class CloudflaredUninstall extends Command
 
         $confirmed = confirm(
             label: "Are you sure you want to delete tunnel {$tunnelConfig->name()}?",
-            hint: 'This will delete the cloudflared tunnel, Herd link, and all associated configs.',
+            hint: 'This will delete the tunnel, DNS records, Herd link, and all associated configs.',
             default: false,
         );
 
@@ -44,8 +48,7 @@ class CloudflaredUninstall extends Command
 
         $this->deleteTunnel($tunnelConfig->name());
         $this->deleteHerdLink($tunnelConfig->hostname());
+        $this->deleteDnsRecords($tunnelConfig);
         $this->deleteProject($tunnelConfig);
-
-        // Optionally: Delete DNS record. This requires a Cloudflare API token.
     }
 }

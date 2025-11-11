@@ -2,29 +2,51 @@
 
 namespace Aerni\Cloudflared\Concerns;
 
-use Aerni\Cloudflared\Facades\Cloudflared;
+use Aerni\Cloudflared\CloudflareClient;
+use Aerni\Cloudflared\TunnelConfig;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Http;
+
+use function Laravel\Prompts\spin;
+use function Laravel\Prompts\info;
+use function Laravel\Prompts\warning;
 
 trait InteractsWithCloudflareApi
 {
-    // TODO: Can we use the same extracted API token to delete DNS records?
+    protected function cloudflare(): CloudflareClient
+    {
+        return app(CloudflareClient::class);
+    }
+
     protected function authenticatedDomain(): string
     {
         try {
-            $certificate = Cloudflared::certificate();
-
-            return Cache::rememberForever("cloudflared.domain.{$certificate->hash()}", function () use ($certificate) {
-                return Http::withHeaders([
-                    'Authorization' => "Bearer {$certificate->apiToken}",
-                    'Content-Type' => 'application/json',
-                ])
-                    ->get("https://api.cloudflare.com/client/v4/zones/{$certificate->zoneId}")
-                    ->throw()
-                    ->json('result.name');
-            });
+            return Cache::rememberForever(
+                "cloudflared.domain.{$this->cloudflare()->hash()}",
+                fn () => $this->cloudflare()->getZoneName()
+            );
         } catch (\Throwable $e) {
             return $this->fail($e->getMessage());
+        }
+    }
+
+    protected function deleteDnsRecord(string $hostname): void
+    {
+        $result = spin(
+            callback: fn () => $this->cloudflare()->deleteDnsRecord($hostname),
+            message: "Deleting DNS record: {$hostname}"
+        );
+
+        $result
+            ? info(" ✔ Deleted DNS record: {$hostname}")
+            : warning(" ⚠ Can't delete DNS record {$hostname} because it doesn't exist.");
+    }
+
+    protected function deleteDnsRecords(TunnelConfig $tunnelConfig): void
+    {
+        $this->deleteDnsRecord($tunnelConfig->hostname());
+
+        if ($tunnelConfig->projectConfig->vite) {
+            $this->deleteDnsRecord($tunnelConfig->viteHostname());
         }
     }
 }

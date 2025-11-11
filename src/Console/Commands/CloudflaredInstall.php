@@ -81,7 +81,7 @@ class CloudflaredInstall extends Command
             label: 'What would you like to do?',
             options: [
                 'Keep existing configuration',
-                'Change hostname',
+                'Change subdomain',
                 'Repair DNS records',
                 'Delete and recreate tunnel',
             ],
@@ -90,7 +90,7 @@ class CloudflaredInstall extends Command
 
         match ($selection) {
             'Keep existing configuration' => $this->keepExisting(),
-            'Change hostname' => $this->changeHostname($tunnelConfig->projectConfig),
+            'Change subdomain' => $this->changeSubdomain($tunnelConfig->projectConfig),
             'Repair DNS records' => $this->repairDnsRecords($tunnelConfig->projectConfig),
             'Delete and recreate tunnel' => $this->recreateTunnel($tunnelConfig),
         };
@@ -102,19 +102,25 @@ class CloudflaredInstall extends Command
         exit(0);
     }
 
-    // Todo: If we use the Cloudflare API in the future, this should also delete the old DNS records.
-    protected function changeHostname(ProjectConfig $projectConfig): void
+    protected function changeSubdomain(ProjectConfig $projectConfig): void
     {
         $oldHostname = $projectConfig->hostname;
+        $oldViteHostname = $projectConfig->viteHostname();
+
         $projectConfig->hostname = $this->askForSubdomain();
 
         $this->createDnsRecords($projectConfig);
+
+        $this->deleteDnsRecord($oldHostname);
+
+        if ($projectConfig->vite) {
+            $this->deleteDnsRecord($oldViteHostname);
+        }
+
         $this->deleteHerdLink($oldHostname);
         $this->createHerdLink($projectConfig->hostname);
 
         $projectConfig->save();
-
-        info(" ✔ Changed hostname to: {$projectConfig->hostname}");
     }
 
     protected function repairDnsRecords(ProjectConfig $projectConfig): void
