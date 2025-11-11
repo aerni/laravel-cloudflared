@@ -212,8 +212,4 @@ class CloudflaredInstall extends Command
             },
         );
     }
-
-    // TODO: Handle exit handlers in case users abort the command midway.
-    // - delete tunnels that were created.
-    // - delete .cloudflared.yaml file.
 }
