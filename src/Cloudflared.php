@@ -2,8 +2,6 @@
 
 namespace Aerni\Cloudflared;
 
-use Symfony\Component\Yaml\Yaml;
-
 class Cloudflared
 {
     public function makeProjectConfig(string $id, string $name, string $hostname, bool $vite = false): ProjectConfig
@@ -13,13 +11,7 @@ class Cloudflared
 
     public function projectConfig(): ProjectConfig
     {
-        return once(function () {
-            if (! $this->isInstalled()) {
-                throw new \RuntimeException('No project configuration found. Run "php artisan cloudflared:install" first.');
-            }
-
-            return $this->makeProjectConfig(...Yaml::parseFile(ProjectConfig::path()));
-        });
+        return once(fn () => ProjectConfig::load());
     }
 
     public function tunnelConfig(): TunnelConfig

@@ -3,6 +3,7 @@
 namespace Aerni\Cloudflared;
 
 use Illuminate\Support\Facades\File;
+use Symfony\Component\Yaml\Yaml;
 
 class ProjectConfig
 {
@@ -12,6 +13,15 @@ class ProjectConfig
         public string $hostname,
         public bool $vite = false
     ) {}
+
+    public static function load(): self
+    {
+        if (! static::exists()) {
+            throw new \RuntimeException('No project configuration found. Run "php artisan cloudflared:install" first.');
+        }
+
+        return new self(...Yaml::parseFile(static::path()));
+    }
 
     public function save(): void
     {
