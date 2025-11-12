@@ -2,9 +2,9 @@
 
 namespace Aerni\Cloudflared\Concerns;
 
-use Aerni\Cloudflared\CloudflareClient;
+use Aerni\Cloudflared\Clients\CloudflareClient;
+use Aerni\Cloudflared\Data\TunnelConfig;
 use Aerni\Cloudflared\Exceptions\NotATunnelDnsRecordException;
-use Aerni\Cloudflared\TunnelConfig;
 use Illuminate\Support\Facades\Cache;
 
 use function Laravel\Prompts\info;

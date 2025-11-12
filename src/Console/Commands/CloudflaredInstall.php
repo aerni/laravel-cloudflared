@@ -6,10 +6,10 @@ use Aerni\Cloudflared\Concerns\InteractsWithCloudflareApi;
 use Aerni\Cloudflared\Concerns\InteractsWithHerd;
 use Aerni\Cloudflared\Concerns\InteractsWithTunnel;
 use Aerni\Cloudflared\Concerns\ManagesProject;
+use Aerni\Cloudflared\Data\ProjectConfig;
+use Aerni\Cloudflared\Data\TunnelConfig;
 use Aerni\Cloudflared\Exceptions\DnsRecordAlreadyExistsException;
 use Aerni\Cloudflared\Facades\Cloudflared;
-use Aerni\Cloudflared\ProjectConfig;
-use Aerni\Cloudflared\TunnelConfig;
 use Illuminate\Console\Command;
 use Illuminate\Support\Arr;
 

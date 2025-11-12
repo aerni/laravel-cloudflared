@@ -5,8 +5,8 @@ namespace Aerni\Cloudflared\Console\Commands;
 use Aerni\Cloudflared\Concerns\InteractsWithHerd;
 use Aerni\Cloudflared\Concerns\InteractsWithTunnel;
 use Aerni\Cloudflared\Concerns\ManagesProject;
+use Aerni\Cloudflared\Data\TunnelConfig;
 use Aerni\Cloudflared\Facades\Cloudflared;
-use Aerni\Cloudflared\TunnelConfig;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Process;
 

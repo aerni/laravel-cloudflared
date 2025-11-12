@@ -1,6 +1,6 @@
 <?php
 
-namespace Aerni\Cloudflared;
+namespace Aerni\Cloudflared\Data;
 
 class TunnelDetails
 {

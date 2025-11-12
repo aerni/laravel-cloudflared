@@ -2,6 +2,9 @@
 
 namespace Aerni\Cloudflared;
 
+use Aerni\Cloudflared\Data\ProjectConfig;
+use Aerni\Cloudflared\Data\TunnelConfig;
+
 class Cloudflared
 {
     public function isInstalled(): bool

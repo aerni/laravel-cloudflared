@@ -2,8 +2,8 @@
 
 namespace Aerni\Cloudflared\Concerns;
 
-use Aerni\Cloudflared\ProjectConfig;
-use Aerni\Cloudflared\TunnelConfig;
+use Aerni\Cloudflared\Data\ProjectConfig;
+use Aerni\Cloudflared\Data\TunnelConfig;
 
 use function Laravel\Prompts\info;
 

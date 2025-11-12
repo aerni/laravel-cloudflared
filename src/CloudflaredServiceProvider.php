@@ -2,9 +2,11 @@
 
 namespace Aerni\Cloudflared;
 
+use Aerni\Cloudflared\Clients\CloudflareClient;
 use Aerni\Cloudflared\Console\Commands\CloudflaredInstall;
 use Aerni\Cloudflared\Console\Commands\CloudflaredRun;
 use Aerni\Cloudflared\Console\Commands\CloudflaredUninstall;
+use Aerni\Cloudflared\Data\Certificate;
 use Aerni\Cloudflared\Facades\Cloudflared;
 use Illuminate\Support\ServiceProvider;
 

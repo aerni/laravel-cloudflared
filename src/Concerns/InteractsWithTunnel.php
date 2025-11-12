@@ -2,8 +2,8 @@
 
 namespace Aerni\Cloudflared\Concerns;
 
+use Aerni\Cloudflared\Data\TunnelDetails;
 use Aerni\Cloudflared\Exceptions\DnsRecordAlreadyExistsException;
-use Aerni\Cloudflared\TunnelDetails;
 use Illuminate\Support\Facades\Process;
 use Illuminate\Support\Str;
 

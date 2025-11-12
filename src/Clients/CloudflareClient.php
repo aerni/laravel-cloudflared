@@ -1,7 +1,8 @@
 <?php
 
-namespace Aerni\Cloudflared;
+namespace Aerni\Cloudflared\Clients;
 
+use Aerni\Cloudflared\Data\Certificate;
 use Aerni\Cloudflared\Exceptions\NotATunnelDnsRecordException;
 use Cloudflare\API\Adapter\Guzzle;
 use Cloudflare\API\Auth\APIToken;

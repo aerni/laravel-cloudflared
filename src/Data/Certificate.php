@@ -1,6 +1,6 @@
 <?php
 
-namespace Aerni\Cloudflared;
+namespace Aerni\Cloudflared\Data;
 
 use Illuminate\Support\Facades\File;
 
