@@ -37,7 +37,7 @@ YAML);
         return $this->projectConfig->hostname;
     }
 
-    public function viteHostname(): string
+    public function viteHostname(): ?string
     {
         return $this->projectConfig->viteHostname();
     }

@@ -25,9 +25,9 @@ vite: {$vite}
 YAML);
     }
 
-    public function viteHostname(): string
+    public function viteHostname(): ?string
     {
-        return "vite-{$this->hostname}";
+        return $this->vite ? "vite-{$this->hostname}" : null;
     }
 
     public function delete(): void
