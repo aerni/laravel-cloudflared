@@ -4,11 +4,6 @@ namespace Aerni\Cloudflared;
 
 class Cloudflared
 {
-    public function makeProjectConfig(string $id, string $name, string $hostname, bool $vite = false): ProjectConfig
-    {
-        return new ProjectConfig($id, $name, $hostname, $vite);
-    }
-
     public function projectConfig(): ProjectConfig
     {
         return once(fn () => ProjectConfig::load());

@@ -49,7 +49,7 @@ class CloudflaredInstall extends Command
 
         $tunnelDetails = $this->createTunnel();
 
-        $projectConfig = Cloudflared::makeProjectConfig(
+        $projectConfig = new ProjectConfig(
             id: $tunnelDetails->id,
             name: $tunnelDetails->name,
             hostname: $hostname,
