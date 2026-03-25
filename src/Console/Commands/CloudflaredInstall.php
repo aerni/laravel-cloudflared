@@ -242,6 +242,7 @@ class CloudflaredInstall extends Command
             placeholder: $this->herdSiteName(),
             default: $this->herdSiteName(),
             hint: "The tunnel will be available at {subdomain}.{$domain}",
+            required: true,
         );
 
         return "{$subdomain}.{$domain}";
