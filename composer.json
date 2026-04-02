@@ -16,9 +16,27 @@
         "illuminate/http": "^12.0 || ^13.0",
         "illuminate/support": "^12.0 || ^13.0"
     },
+    "require-dev": {
+        "orchestra/testbench": "^10.0 || ^11.0",
+        "pestphp/pest": "^4.4"
+    },
     "autoload": {
         "psr-4": {
             "Aerni\\Cloudflared\\": "src"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Tests\\": "tests"
+        }
+    },
+    "scripts": {
+        "test": "vendor/bin/pest"
+    },
+    "config": {
+        "sort-packages": true,
+        "allow-plugins": {
+            "pestphp/pest-plugin": true
         }
     },
     "extra": {
@@ -27,9 +45,6 @@
                 "Aerni\\Cloudflared\\CloudflaredServiceProvider"
             ]
         }
-    },
-    "config": {
-        "sort-packages": true
     },
     "prefer-stable": true,
     "minimum-stability": "dev"
