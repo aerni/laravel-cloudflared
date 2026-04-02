@@ -9,9 +9,7 @@ use Illuminate\Support\Facades\Http;
 
 class CloudflareClient
 {
-    public function __construct(public readonly Certificate $certificate)
-    {
-    }
+    public function __construct(public readonly Certificate $certificate) {}
 
     protected function http(): PendingRequest
     {
