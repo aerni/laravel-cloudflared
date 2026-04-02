@@ -4,48 +4,55 @@ namespace Aerni\Cloudflared\Clients;
 
 use Aerni\Cloudflared\Data\Certificate;
 use Aerni\Cloudflared\Exceptions\NotATunnelDnsRecordException;
-use Cloudflare\API\Adapter\Guzzle;
-use Cloudflare\API\Auth\APIToken;
-use Cloudflare\API\Endpoints\DNS;
-use Cloudflare\API\Endpoints\Zones;
+use Illuminate\Http\Client\PendingRequest;
+use Illuminate\Support\Facades\Http;
 
 class CloudflareClient
 {
-    public readonly Zones $zones;
-
-    public readonly DNS $dns;
-
     public function __construct(public readonly Certificate $certificate)
     {
-        $auth = new APIToken($this->certificate->apiToken);
-        $adapter = new Guzzle($auth);
+    }
 
-        $this->zones = new Zones($adapter);
-        $this->dns = new DNS($adapter);
+    protected function http(): PendingRequest
+    {
+        return Http::baseUrl('https://api.cloudflare.com/client/v4')
+            ->withToken($this->certificate->apiToken)
+            ->acceptJson()
+            ->asJson()
+            ->timeout(10)
+            ->retry(2, 100)
+            ->throw();
     }
 
     public function zoneName(): string
     {
-        return $this->zones
-            ->getZoneById($this->certificate->zoneId)
-            ->result->name;
+        return $this->http()
+            ->get("zones/{$this->certificate->zoneId}")
+            ->json('result.name');
     }
 
-    public function dnsRecordId(string $hostname, string $type = 'CNAME'): string
+    public function dnsRecordId(string $hostname): ?string
     {
-        return $this->dns->getRecordID($this->certificate->zoneId, $type, $hostname);
+        return $this->http()
+            ->get("zones/{$this->certificate->zoneId}/dns_records", [
+                'type' => 'CNAME',
+                'name' => $hostname,
+            ])
+            ->json('result.0.id');
     }
 
     public function isTunnelRecord(string $recordId): bool
     {
-        $record = $this->dns->getRecordDetails($this->certificate->zoneId, $recordId);
+        $content = $this->http()
+            ->get("zones/{$this->certificate->zoneId}/dns_records/{$recordId}")
+            ->json('result.content');
 
-        return isset($record->content) && str_ends_with($record->content, '.cfargotunnel.com');
+        return $content !== null && str_ends_with($content, '.cfargotunnel.com');
     }
 
-    public function deleteDnsRecord(string $hostname, string $type = 'CNAME'): bool
+    public function deleteDnsRecord(string $hostname): bool
     {
-        if (! $recordId = $this->dnsRecordId($hostname, $type)) {
+        if (! $recordId = $this->dnsRecordId($hostname)) {
             return false;
         }
 
@@ -53,6 +60,8 @@ class CloudflareClient
             throw new NotATunnelDnsRecordException($hostname);
         }
 
-        return $this->dns->deleteRecord($this->certificate->zoneId, $recordId);
+        $this->http()->delete("zones/{$this->certificate->zoneId}/dns_records/{$recordId}");
+
+        return true;
     }
 }
