@@ -61,8 +61,8 @@ By default, `cloudflared:run` writes a tunnel YAML that forwards traffic to `htt
 If your local service uses HTTPS or runs on a different port, override the `CLOUDFLARED_SERVICE_URL` environment variable in your `.env` file:
 
 ```env
-# Use the Herd-secured HTTPS URL
-CLOUDFLARED_SERVICE_URL=https://myapp.test
+# Use the Herd-secured HTTPS URL (note: herd link myapp.com creates myapp.com.test)
+CLOUDFLARED_SERVICE_URL=https://myapp.com.test
 
 # Use a standalone dev server
 CLOUDFLARED_SERVICE_URL=http://localhost:8000

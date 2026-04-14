@@ -17,7 +17,7 @@ return [
     |
     | Override this when your local service uses HTTPS or a different port:
     |
-    |   CLOUDFLARED_SERVICE_URL=https://myapp.test
+    |   CLOUDFLARED_SERVICE_URL=https://myapp.com.test
     |   CLOUDFLARED_SERVICE_URL=http://localhost:8000
     |
     | Do NOT set this to your public Cloudflare hostname (e.g. myapp.com). That
