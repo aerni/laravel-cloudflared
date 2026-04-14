@@ -43,6 +43,10 @@ class CloudflaredServiceProvider extends ServiceProvider
 
     protected function setAppUrl(): void
     {
+        if (! config('cloudflared.override_app_url', true)) {
+            return;
+        }
+
         if (! Cloudflared::isInstalled()) {
             return;
         }

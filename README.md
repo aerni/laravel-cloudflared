@@ -70,6 +70,16 @@ CLOUDFLARED_SERVICE_URL=http://localhost:8000
 
 > **Important:** Never set `CLOUDFLARED_SERVICE_URL` to your public Cloudflare hostname (e.g. `https://myapp.com`). The tunnel daemon resolves this URL locally, so pointing it at the public hostname would route requests back through Cloudflare and create an infinite loop.
 
+### Disable APP_URL override
+
+By default the package overrides `config('app.url')` at runtime when an incoming request arrives through the tunnel. If `APP_URL` is already set to the correct public Cloudflare hostname, you can disable this behaviour entirely:
+
+```env
+CLOUDFLARED_OVERRIDE_APP_URL=false
+```
+
+This is the recommended setting when `APP_URL` is the public hostname and must remain stable across all contexts (web requests, queue workers, scheduled commands, and Artisan).
+
 #### Why this matters when `APP_URL` is the public URL
 
 If your `APP_URL` is already set to the public Cloudflare hostname (e.g. `https://myapp.com`) — common when generating signed URLs or webhooks that must be publicly reachable — the package previously used `APP_URL` as the tunnel's local service, which caused the loop described above.

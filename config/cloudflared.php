@@ -28,4 +28,23 @@ return [
 
     'service_url' => env('CLOUDFLARED_SERVICE_URL'),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Override APP_URL
+    |--------------------------------------------------------------------------
+    |
+    | When enabled, the package overrides config('app.url') at runtime to the
+    | public Cloudflare hostname whenever an incoming request host matches the
+    | tunnel hostname. This ensures URL generation (routes, assets, etc.) uses
+    | the public URL for requests arriving through the tunnel.
+    |
+    | Disable this when APP_URL is already set to the public Cloudflare
+    | hostname (e.g. https://myapp.com) and you do not want the package to
+    | modify it. This is safe when APP_URL is correct for all contexts,
+    | including queue workers, scheduled commands, and web requests.
+    |
+    */
+
+    'override_app_url' => env('CLOUDFLARED_OVERRIDE_APP_URL', true),
+
 ];
