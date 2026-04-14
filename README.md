@@ -46,6 +46,36 @@ Remove the tunnel, DNS records, and configuration when you no longer need it.
 php artisan cloudflared:uninstall
 ```
 
+## Configuration
+
+Publish the config file to customise the package behaviour:
+
+```bash
+php artisan vendor:publish --tag=cloudflared-config
+```
+
+### Local service URL
+
+By default, `cloudflared:run` writes a tunnel YAML that forwards traffic to `http://{hostname}.test` — the Herd link URL that the command creates automatically via `herd link {hostname}`.
+
+If your local service uses HTTPS or runs on a different port, override the `CLOUDFLARED_SERVICE_URL` environment variable in your `.env` file:
+
+```env
+# Use the Herd-secured HTTPS URL
+CLOUDFLARED_SERVICE_URL=https://myapp.test
+
+# Use a standalone dev server
+CLOUDFLARED_SERVICE_URL=http://localhost:8000
+```
+
+> **Important:** Never set `CLOUDFLARED_SERVICE_URL` to your public Cloudflare hostname (e.g. `https://myapp.com`). The tunnel daemon resolves this URL locally, so pointing it at the public hostname would route requests back through Cloudflare and create an infinite loop.
+
+#### Why this matters when `APP_URL` is the public URL
+
+If your `APP_URL` is already set to the public Cloudflare hostname (e.g. `https://myapp.com`) — common when generating signed URLs or webhooks that must be publicly reachable — the package previously used `APP_URL` as the tunnel's local service, which caused the loop described above.
+
+The `CLOUDFLARED_SERVICE_URL` option solves this by decoupling the **local origin the tunnel forwards to** from the **public-facing `APP_URL`**. The `setAppUrl()` behaviour that overrides `config('app.url')` for incoming Cloudflare requests is unaffected; it continues to derive the public URL from `APP_URL`'s scheme and the tunnel hostname.
+
 ## License
 
 This package is open-sourced software licensed under the [MIT license](LICENSE.md).

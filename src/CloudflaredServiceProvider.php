@@ -14,6 +14,7 @@ class CloudflaredServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
+        $this->mergeConfigFrom(__DIR__.'/../config/cloudflared.php', 'cloudflared');
         $this->registerCloudflareClient();
         $this->setAppUrl();
     }
@@ -28,6 +29,10 @@ class CloudflaredServiceProvider extends ServiceProvider
                 CloudflaredRun::class,
                 CloudflaredUninstall::class,
             ]);
+
+            $this->publishes([
+                __DIR__.'/../config/cloudflared.php' => config_path('cloudflared.php'),
+            ], 'cloudflared-config');
         }
     }
 

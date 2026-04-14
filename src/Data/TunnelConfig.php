@@ -52,14 +52,33 @@ YAML);
         return $this->projectConfig->name;
     }
 
+    /**
+     * The local origin URL the cloudflared daemon forwards tunnel traffic to.
+     *
+     * Reads from the `cloudflared.service_url` config value (set via
+     * CLOUDFLARED_SERVICE_URL in .env). When not configured, falls back to
+     * http://{hostname}.test — the Herd link URL created by cloudflared:run.
+     *
+     * This must be a locally reachable URL, never the public Cloudflare
+     * hostname, which would cause the tunnel to loop back through Cloudflare.
+     */
     public function service(): string
     {
-        return config('app.url');
+        return config('cloudflared.service_url') ?: 'http://'.$this->hostname().'.test';
     }
 
+    /**
+     * The public-facing URL of the tunnel (scheme derived from APP_URL).
+     *
+     * This is what setAppUrl() uses to override config('app.url') when an
+     * incoming request host matches the tunnel hostname. The scheme is taken
+     * from APP_URL rather than service(), so that a local HTTP service URL
+     * (e.g. http://myapp.test) does not downgrade the public URL to HTTP when
+     * Cloudflare is terminating TLS at the edge.
+     */
     public function url(): string
     {
-        return parse_url($this->service(), PHP_URL_SCHEME).'://'.$this->hostname();
+        return parse_url(config('app.url'), PHP_URL_SCHEME).'://'.$this->hostname();
     }
 
     public function path(): string
