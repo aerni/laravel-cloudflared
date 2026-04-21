@@ -59,7 +59,7 @@ YAML);
 
     public function url(): string
     {
-        return parse_url($this->service(), PHP_URL_SCHEME).'://'.$this->hostname();
+        return "https://{$this->hostname()}";
     }
 
     public function path(): string
