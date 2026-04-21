@@ -18,6 +18,8 @@ Install the package using Composer:
 composer require aerni/cloudflared
 ```
 
+Keep `APP_URL` set to your local Herd URL (e.g. `http://myapp.test`). Do not set it to the public tunnel hostname. That would make cloudflared forward traffic to itself. While the tunnel is running, the package automatically rewrites URL generation to the public Cloudflare URL in web requests, queue workers, and scheduled commands. You never need to edit `.env` whether the tunnel is active or not.
+
 ## Basic Usage
 
 ### Creating a tunnel
@@ -46,25 +48,19 @@ Remove the tunnel, DNS records, and configuration when you no longer need it.
 php artisan cloudflared:uninstall
 ```
 
-## Setup
-
-### Keep `APP_URL` as your local Herd URL
-
-Set `APP_URL` to your local Herd URL (e.g. `http://myapp.test`). While the tunnel is running, the package automatically rewrites `config('app.url')` and the URL generator to the public Cloudflare URL — for both tunneled HTTP requests and console processes (queue workers, scheduled commands, artisan). Do not set `APP_URL` to the public tunnel hostname; that would make cloudflared forward traffic to itself.
-
-This means signed URLs and webhook callbacks generated from queue jobs point at the public URL while the tunnel is active, without you ever editing `.env`.
+## Good to know
 
 ### Trusted proxies
 
-Signed URL validation and HTTPS detection through the tunnel rely on Laravel honoring `X-Forwarded-Proto` from cloudflared — the same [TrustProxies setup](https://laravel.com/docs/requests#configuring-trusted-proxies) you'd use behind any TLS-terminating proxy. Most production apps already have this configured.
+Signed URL validation and HTTPS detection through the tunnel rely on Laravel honoring `X-Forwarded-Proto` from Cloudflare. This is the same [TrustProxies setup](https://laravel.com/docs/requests#configuring-trusted-proxies) you'd use behind any TLS-terminating proxy. Most production apps already have this configured.
 
 ### Long-running queue workers
 
-The override is captured once at provider-register time. If you toggle the tunnel while `queue:work` is running, restart it with `php artisan queue:restart` so new URLs pick up the change. `queue:listen` and scheduled commands start fresh each run and aren't affected.
+The URL rewrite is captured once when the worker boots. Restart long-running workers after starting or stopping the tunnel so new URLs pick up the change.
 
-### Don't run `config:cache` while the tunnel is up
+### Config caching
 
-The override runs during bootstrap, so `php artisan config:cache` would serialize the overridden `app.url` into the cached config file and pin it. Run `php artisan config:clear` if this happens.
+Make sure your config isn't cached while the tunnel is up. The rewrite runs during bootstrap, so the tunnel URL would get serialized into the cached config and pin there. Clear your config cache if this happens.
 
 ## License
 
