@@ -8,6 +8,7 @@ use Aerni\Cloudflared\Console\Commands\CloudflaredRun;
 use Aerni\Cloudflared\Console\Commands\CloudflaredUninstall;
 use Aerni\Cloudflared\Data\Certificate;
 use Aerni\Cloudflared\Facades\Cloudflared;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\URL;
@@ -59,8 +60,20 @@ class CloudflaredServiceProvider extends ServiceProvider
             return;
         }
 
+        Config::set('app.url', $tunnel->url());
+
+        /**
+         * Console: rebuild the console request from the public URL, as Laravel's
+         * SetRequestForConsole does from APP_URL. Forcing the URL origin here would
+         * leak into tools that read it while generating source files (e.g. Wayfinder).
+         */
+        if ($this->app->runningInConsole()) {
+            $this->app->instance('request', Request::create($tunnel->url(), 'GET', [], [], [], $_SERVER));
+
+            return;
+        }
+
         URL::useOrigin($tunnel->url());
         URL::forceScheme('https');
-        Config::set('app.url', $tunnel->url());
     }
 }

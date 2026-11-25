@@ -50,6 +50,17 @@ describe('setAppUrl from a console context', function () {
         bootProvider();
         expect(URL::signedRoute('webhook'))->toStartWith(PUBLIC_URL);
     });
+
+    it('does not force the url origin when the tunnel is running', function () {
+        installCloudflared();
+        runCloudflared();
+        bootProvider();
+
+        // Code generators such as Wayfinder read these to qualify generated routes.
+        $url = app('url');
+        expect((new ReflectionProperty($url, 'forcedRoot'))->getValue($url))->toBeNull()
+            ->and((new ReflectionProperty($url, 'forceScheme'))->getValue($url))->toBeNull();
+    });
 });
 
 describe('setAppUrl from a web context', function () {
